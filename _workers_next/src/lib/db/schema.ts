@@ -58,6 +58,7 @@ export const orders = sqliteTable('orders', {
 export const loginUsers = sqliteTable('login_users', {
     userId: text('user_id').primaryKey(),
     username: text('username'),
+    email: text('email'),
     points: integer('points').default(0).notNull(),
     isBlocked: integer('is_blocked', { mode: 'boolean' }).default(false),
     createdAt: integer('created_at', { mode: 'timestamp_ms' }).$defaultFn(() => new Date()),

@@ -517,6 +517,15 @@
     "footer": {
         "disclaimer": "Built for Linux DO ecosystem. Not an official service. Developed by chatgpt.org.uk."
     },
+    "profile": {
+        "emailTitle": "Email",
+        "emailLabel": "Default Email",
+        "emailPlaceholder": "you@example.com",
+        "emailHint": "Used as the default delivery email when you place orders.",
+        "emailSave": "Save Email",
+        "emailSaved": "Email saved",
+        "emailInvalid": "Invalid email format"
+    },
     "language": {
         "switch": "Language",
         "en": "English",

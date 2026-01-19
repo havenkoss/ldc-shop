@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import { db } from "@/lib/db"
 import { orders, loginUsers } from "@/lib/db/schema"
 import { eq, desc, sql } from "drizzle-orm"
-import { normalizeTimestampMs } from "@/lib/db/queries"
+import { normalizeTimestampMs, getLoginUserEmail } from "@/lib/db/queries"
 import { ProfileContent } from "@/components/profile-content"
 
 export const dynamic = 'force-dynamic'
@@ -19,6 +19,7 @@ export default async function ProfilePage() {
 
     // Get user points
     let userPoints = 0
+    let profileEmail: string | null = null
     try {
         const userResult = await db.select({ points: loginUsers.points })
             .from(loginUsers)
@@ -27,6 +28,12 @@ export default async function ProfilePage() {
         userPoints = userResult[0]?.points || 0
     } catch {
         userPoints = 0
+    }
+
+    try {
+        profileEmail = await getLoginUserEmail(userId)
+    } catch {
+        profileEmail = null
     }
 
     // Get order statistics
@@ -81,7 +88,8 @@ export default async function ProfilePage() {
                 id: session.user.id,
                 name: session.user.name || session.user.username || "User",
                 username: session.user.username || null,
-                avatar: session.user.avatar_url || null
+                avatar: session.user.avatar_url || null,
+                email: profileEmail || session.user.email || null
             }}
             points={userPoints}
             orderStats={orderStats}

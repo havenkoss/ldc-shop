@@ -8,6 +8,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Coins, Package, Clock, CheckCircle, ChevronRight, User, LogOut } from "lucide-react"
 import { signOut } from "next-auth/react"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { toast } from "sonner"
+import { updateProfileEmail } from "@/actions/profile"
+import { useState } from "react"
 
 interface ProfileContentProps {
     user: {
@@ -15,6 +20,7 @@ interface ProfileContentProps {
         name: string
         username: string | null
         avatar: string | null
+        email: string | null
     }
     points: number
     orderStats: {
@@ -33,6 +39,8 @@ interface ProfileContentProps {
 
 export function ProfileContent({ user, points, orderStats, recentOrders }: ProfileContentProps) {
     const { t } = useI18n()
+    const [email, setEmail] = useState(user.email || '')
+    const [savingEmail, setSavingEmail] = useState(false)
 
     const getStatusBadge = (status: string | null) => {
         switch (status) {
@@ -68,6 +76,49 @@ export function ProfileContent({ user, points, orderStats, recentOrders }: Profi
                             )}
                             <p className="text-xs text-muted-foreground mt-1">ID: {user.id}</p>
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Email */}
+            <Card className="mb-6">
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-base">{t('profile.emailTitle')}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="space-y-2">
+                        <Label htmlFor="profile-email">{t('profile.emailLabel')}</Label>
+                        <Input
+                            id="profile-email"
+                            type="email"
+                            placeholder={t('profile.emailPlaceholder')}
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            disabled={savingEmail}
+                        />
+                        <p className="text-xs text-muted-foreground">{t('profile.emailHint')}</p>
+                        <Button
+                            variant="outline"
+                            className="mt-2"
+                            disabled={savingEmail}
+                            onClick={async () => {
+                                setSavingEmail(true)
+                                try {
+                                    const result = await updateProfileEmail(email)
+                                    if (result?.success) {
+                                        toast.success(t('profile.emailSaved'))
+                                    } else {
+                                        toast.error(result?.error ? t(result.error) : t('common.error'))
+                                    }
+                                } catch {
+                                    toast.error(t('common.error'))
+                                } finally {
+                                    setSavingEmail(false)
+                                }
+                            }}
+                        >
+                            {t('profile.emailSave')}
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { products, cards, orders, loginUsers } from "@/lib/db/schema"
-import { cancelExpiredOrders, recalcProductAggregates } from "@/lib/db/queries"
+import { cancelExpiredOrders, recalcProductAggregates, getLoginUserEmail } from "@/lib/db/queries"
 import { generateOrderId, generateSign } from "@/lib/crypto"
 import { eq, sql, and, or, isNull, lt } from "drizzle-orm"
 import { cookies } from "next/headers"
@@ -80,6 +80,8 @@ export async function createOrder(productId: string, quantity: number = 1, email
     }
 
     const isZeroPrice = finalAmount <= 0
+    const profileEmail = (!email && user?.id) ? await getLoginUserEmail(user.id) : null
+    const resolvedEmail = email || profileEmail || user?.email || null
 
     // 2. Check Stock
     const getAvailableStock = async () => {
@@ -342,7 +344,7 @@ export async function createOrder(productId: string, quantity: number = 1, email
                     productId: product.id,
                     productName: product.name,
                     amount: finalAmount.toString(),
-                    email: email || user?.email || null,
+                    email: resolvedEmail,
                     userId: user?.id || null,
                     username: username || user?.username || null,
                     status: 'delivered',
@@ -373,7 +375,7 @@ export async function createOrder(productId: string, quantity: number = 1, email
                 }
 
                 // Send email with card keys
-                const orderEmail = email || user?.email;
+                const orderEmail = resolvedEmail;
                 if (orderEmail) {
                     await sendOrderEmail({
                         to: orderEmail,
@@ -389,7 +391,7 @@ export async function createOrder(productId: string, quantity: number = 1, email
                     productId: product.id,
                     productName: product.name,
                     amount: finalAmount.toString(),
-                    email: email || user?.email || null,
+                    email: resolvedEmail,
                     userId: user?.id || null,
                     username: username || user?.username || null,
                     status: 'pending',

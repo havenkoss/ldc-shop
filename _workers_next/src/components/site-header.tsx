@@ -21,7 +21,7 @@ export async function SiteHeader() {
     const session = await auth()
     const user = session?.user
     if (user?.id) {
-        await recordLoginUser(user.id, user.username || user.name || null)
+        await recordLoginUser(user.id, user.username || user.name || null, user.email || null)
     }
 
     // Check if admin (case-insensitive)
@@ -63,7 +63,6 @@ export async function SiteHeader() {
                 </div>
                 <div className="flex items-center justify-end gap-2 md:gap-3">
                     <nav className="flex items-center space-x-1 rounded-full border border-border/20 bg-muted/20 px-1.5 py-1 md:px-2">
-                        {user && <CheckInButton enabled={checkinEnabled} />}
                         <LanguageSwitcher />
                         <ModeToggle />
                         {user ? (
@@ -83,6 +82,10 @@ export async function SiteHeader() {
                                             <p className="text-xs leading-none text-muted-foreground">ID: {user.id}</p>
                                         </div>
                                     </DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <div className="px-2 py-1">
+                                        <CheckInButton enabled={checkinEnabled} />
+                                    </div>
                                     <DropdownMenuSeparator />
                                     <HeaderUserMenuItems isAdmin={isAdmin} />
                                     <DropdownMenuSeparator />

@@ -860,6 +860,7 @@ async function ensureLoginUsersTable() {
         CREATE TABLE IF NOT EXISTS login_users(
         user_id TEXT PRIMARY KEY,
         username TEXT,
+        email TEXT,
         points INTEGER DEFAULT 0 NOT NULL,
         is_blocked BOOLEAN DEFAULT FALSE,
         created_at INTEGER DEFAULT (unixepoch() * 1000),
@@ -930,13 +931,14 @@ async function backfillLoginUsersFromOrdersAndReviews() {
     await markLoginUsersBackfilled();
 }
 
-export async function recordLoginUser(userId: string, username?: string | null) {
+export async function recordLoginUser(userId: string, username?: string | null, email?: string | null) {
     if (!userId) return;
 
     try {
         const result = await db.insert(loginUsers).values({
             userId,
             username: username || null,
+            email: email || null,
             lastLoginAt: new Date()
         }).onConflictDoUpdate({
             target: loginUsers.userId,
@@ -949,10 +951,20 @@ export async function recordLoginUser(userId: string, username?: string | null) 
                 // best effort
             }
         }
+        if (email) {
+            try {
+                await db.run(sql`UPDATE login_users SET email = ${email} WHERE user_id = ${userId} AND (email IS NULL OR email = '')`);
+            } catch {
+                // best effort
+            }
+        }
     } catch (error: any) {
         if (isMissingTable(error) || error?.code === '42703' || error?.message?.includes('column')) {
             await ensureLoginUsersTable();
             // Ensure points column exists for existing tables
+            try {
+                await db.run(sql.raw(`ALTER TABLE login_users ADD COLUMN email TEXT`));
+            } catch { /* duplicate column */ }
             try {
                 await db.run(sql.raw(`ALTER TABLE login_users ADD COLUMN points INTEGER DEFAULT 0 NOT NULL`));
             } catch { /* duplicate column */ }
@@ -963,6 +975,7 @@ export async function recordLoginUser(userId: string, username?: string | null) 
             const result = await db.insert(loginUsers).values({
                 userId,
                 username: username || null,
+                email: email || null,
                 lastLoginAt: new Date()
             }).onConflictDoUpdate({
                 target: loginUsers.userId,
@@ -975,9 +988,44 @@ export async function recordLoginUser(userId: string, username?: string | null) 
                     // best effort
                 }
             }
+            if (email) {
+                try {
+                    await db.run(sql`UPDATE login_users SET email = ${email} WHERE user_id = ${userId} AND (email IS NULL OR email = '')`);
+                } catch {
+                    // best effort
+                }
+            }
             return;
         }
         console.error('recordLoginUser error:', error);
+    }
+}
+
+export async function getLoginUserEmail(userId: string): Promise<string | null> {
+    if (!userId) return null;
+    try {
+        const result = await db.select({ email: loginUsers.email })
+            .from(loginUsers)
+            .where(eq(loginUsers.userId, userId))
+            .limit(1);
+        return result[0]?.email ?? null;
+    } catch (error: any) {
+        if (isMissingTableOrColumn(error)) return null;
+        throw error;
+    }
+}
+
+export async function updateLoginUserEmail(userId: string, email: string | null) {
+    if (!userId) return;
+    try {
+        await ensureLoginUsersTable();
+        await safeAddColumn('login_users', 'email', 'TEXT');
+        await db.update(loginUsers)
+            .set({ email: email || null, lastLoginAt: new Date() })
+            .where(eq(loginUsers.userId, userId));
+    } catch (error: any) {
+        if (isMissingTableOrColumn(error)) return;
+        throw error;
     }
 }
 

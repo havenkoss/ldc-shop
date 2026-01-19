@@ -517,6 +517,15 @@
     "footer": {
         "disclaimer": "为 Linux DO 生态打造，非官方服务，由 chatgpt.org.uk 开发"
     },
+    "profile": {
+        "emailTitle": "邮箱",
+        "emailLabel": "默认邮箱",
+        "emailPlaceholder": "you@example.com",
+        "emailHint": "下单时未填写邮箱将默认使用此邮箱。",
+        "emailSave": "保存邮箱",
+        "emailSaved": "邮箱已保存",
+        "emailInvalid": "邮箱格式不正确"
+    },
     "language": {
         "switch": "语言",
         "en": "English",
