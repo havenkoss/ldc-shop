@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react"
 import { buildDefaultLogoDataUrl } from "@/lib/default-logo"
+import { isLikelyLinuxDoAvatarUrl } from "@/lib/shop-logo"
 import { cn } from "@/lib/utils"
 
 interface ShopLogoProps {
@@ -25,7 +26,9 @@ export function ShopLogo({ name, url, logo, updatedAt }: ShopLogoProps) {
     const candidates = useMemo(() => {
         const list: string[] = []
         const trimmedLogo = (logo || "").trim()
-        if (trimmedLogo) list.push(trimmedLogo)
+        if (trimmedLogo && !isLikelyLinuxDoAvatarUrl(trimmedLogo)) {
+            list.push(trimmedLogo)
+        }
         const origin = getOrigin(url)
         if (origin) {
             const favicon = updatedAt ? `${origin}/favicon?v=${updatedAt}` : `${origin}/favicon`
